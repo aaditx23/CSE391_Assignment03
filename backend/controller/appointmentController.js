@@ -4,9 +4,6 @@ const { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, w
 const db = require("../firebaseConfig");
 const Appointment = require("../schema/Appointment");
 
-// Max appointments per mechanic constant
-const MAX_APPOINTMENTS_PER_MECHANIC = 4;
-
 // Create a new appointment
 async function createAppointment(req, res) {
   try {

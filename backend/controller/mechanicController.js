@@ -1,4 +1,4 @@
-const { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } = require("firebase/firestore");
+const { collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDoc } = require("firebase/firestore");
 const db = require("../firebaseConfig"); 
 const Mechanic = require("../schema/Mechanic")
 
@@ -25,6 +25,28 @@ async function getMechanics(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
+
+// Get mechanic by ID
+async function getMechanicById(req, res) {
+  const { id } = req.params; // Get the id from the request parameters
+
+  try {
+    const mechanicRef = doc(db, "mechanics", id); // Reference to the mechanic document
+    const mechanicSnapshot = await getDoc(mechanicRef);
+
+    if (mechanicSnapshot.exists()) {
+      // If the mechanic document exists, return the mechanic data
+      res.status(200).json({ id: mechanicSnapshot.id, ...mechanicSnapshot.data() });
+    } else {
+      // If the mechanic is not found
+      res.status(404).json({ error: "Mechanic not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching mechanic by ID:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+}
+
 
 // Update a mechanic by ID
 async function updateMechanic(req, res) {
@@ -56,6 +78,7 @@ async function deleteMechanic(req, res) {
 module.exports = {
   createMechanic,
   getMechanics,
+  getMechanicById,
   updateMechanic,
   deleteMechanic
 };

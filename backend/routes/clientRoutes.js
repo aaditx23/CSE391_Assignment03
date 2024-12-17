@@ -8,7 +8,7 @@ const clientController = require("../controller/clientController");
 router.post("/clients", clientController.createClient);
 router.get("/clients", clientController.getClients); 
 router.get("/clients/:clientId", clientController.getClientById);
-router.put("/clients/:clientId", clientController.updateClient);
+router.patch("/clients/:clientId", clientController.updateClient);
 router.delete("/clients/:clientId", clientController.deleteClient);
 
 module.exports = router;

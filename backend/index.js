@@ -4,12 +4,15 @@ const bodyParser = require("body-parser");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const clientRoutes = require("./routes/clientRoutes")
 const mechanicRoutes = require("./routes/mechanicRoutes")
+const cors = require('cors');
+
 
 
 
 // Initialize Express
 const app = express();
 
+app.use(cors());
 // Middleware
 app.use(express.json());
 // Routes

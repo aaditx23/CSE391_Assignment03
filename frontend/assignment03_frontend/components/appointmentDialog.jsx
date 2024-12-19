@@ -6,12 +6,14 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
     name: appointment.name || '',
     phone: appointment.phone || '',
     carLicense: appointment.carLicense || '',
-    date: appointment.date ? new Date(appointment.date).toISOString().split('T')[0] : '',
+    date: appointment.date || '', 
     mechanicName: appointment.mechanicName || '',
   });
 
-  const [mechanics, setMechanics] = useState([]);
+  const [mechanicsList, setMechanicsList] = useState([]);
   const [error, setError] = useState('');
+  const [mechanic, setMechanic] = useState(appointment.mechanicName);
+  const [date, setDate] = useState(new Date(appointment.date).toISOString().split('T')[0]);
 
   useEffect(() => {
     const fetchMechanics = async () => {
@@ -19,7 +21,7 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
         const response = await fetch('http://localhost:5000/api/mechanics');
         if (!response.ok) throw new Error('Failed to fetch mechanics');
         const data = await response.json();
-        setMechanics(data);
+        setMechanicsList(data);
       } catch (error) {
         console.error('Error fetching mechanics:', error.message);
       }
@@ -28,17 +30,12 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
     fetchMechanics();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
   const handleSave = async (e) => {
     e.preventDefault();
     setError('');
 
     // Validate if the selected mechanic has a free slot on the selected date
-    const selectedMechanic = mechanics.find((mech) => mech.mechanicId === formData.mechanicName);
+    const selectedMechanic = mechanicsList.find((mech) => mech.mechanicId === formData.mechanicName);
     if (selectedMechanic) {
       const freeSlots = 4 - selectedMechanic.appointmentIds.filter(
         (appt) => appt.date === formData.date
@@ -51,16 +48,19 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/appointments/${appointment.appointmentId}`, {
-        method: 'PUT',
+      const response = await fetch(`http://localhost:5000/api/appointments/${appointment.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          date: date,
+          mechanicName: mechanic
+        }),
       });
 
       const result = await response.json();
       if (response.ok) {
-        onSave(result);
-        onClose();
+        onSave(result); // Pass updated appointment back to parent component to trigger fetch
+        onClose(); // Close the dialog after saving
       } else {
         setError(result.message || 'Failed to update the appointment.');
       }
@@ -85,7 +85,6 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
               type="text"
               name="name"
               value={formData.name}
-              onChange={handleChange}
               disabled
             />
           </Form.Group>
@@ -95,7 +94,6 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
               type="tel"
               name="phone"
               value={formData.phone}
-              onChange={handleChange}
               disabled
             />
           </Form.Group>
@@ -105,7 +103,6 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
               type="text"
               name="carLicense"
               value={formData.carLicense}
-              onChange={handleChange}
               disabled
             />
           </Form.Group>
@@ -114,8 +111,8 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
             <Form.Control
               type="date"
               name="date"
-              value={formData.date}
-              onChange={handleChange}
+              value={date}
+              onChange={(e) => setDate(e.target.value)} 
               min={today}
               required
             />
@@ -124,22 +121,20 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
             <Form.Label>Mechanic</Form.Label>
             <Form.Select
               name="mechanicId"
-              value={formData.mechanicName}
-              onChange={handleChange}
+              value={mechanic}
+              onChange={(e) => setMechanic(e.target.value)} 
               required
             >
               <option value="">Select a Mechanic</option>
-              {mechanics.map((mechanic) => {
+              {mechanicsList.map((mechanic) => {
                 const freeSlots = 4 - mechanic.appointmentIds.length;
                 const isDisabled = freeSlots === 0;
-                console.log(appointment.mechanicName)
 
                 return (
                   <option
                     key={mechanic.mechanicId}
                     value={mechanic.name}
                     disabled={isDisabled}
-                    selected={mechanic.name === appointment.mechanicName}
                   >
                     {mechanic.name}
                   </option>
@@ -147,6 +142,7 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
               })}
             </Form.Select>
           </Form.Group>
+
           <Button variant="primary" type="submit" className="w-100">
             Save Changes
           </Button>

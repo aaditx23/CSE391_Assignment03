@@ -75,15 +75,21 @@ async function getAppointmentsByDate(req, res) {
 }
 
 
-// Update an appointment
 async function updateAppointment(req, res) {
   try {
     const { appointmentId } = req.params;
-    const { data } = req.body;
+    const { date, mechanicName } = req.body;
+    console.log(date, mechanicName)
+    
     const docRef = doc(db, "appointments", appointmentId);
     
     // Update the document with the provided data
-    await updateDoc(docRef, data);
+    await updateDoc(docRef, 
+      {
+        date: date,
+        mechanicName: mechanicName
+      }
+    );
 
     res.status(200).json({ success: true, message: "Appointment updated successfully." });
   } catch (error) {
@@ -91,6 +97,7 @@ async function updateAppointment(req, res) {
     res.status(500).json({ error: "Internal server error." });
   }
 }
+
 
 // Delete an appointment
 async function deleteAppointment(req, res) {

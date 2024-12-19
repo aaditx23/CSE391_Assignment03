@@ -24,7 +24,6 @@ class Appointment {
     this.mechanicName = mechanicName;
   }
 
-  // Function to convert the Appointment object to a plain JavaScript object for storage
   toPlainObject() {
     return {
       name: this.name,

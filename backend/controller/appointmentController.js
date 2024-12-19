@@ -52,6 +52,29 @@ async function getAppointmentById(req, res) {
   }
 }
 
+// Get appointments by date
+async function getAppointmentsByDate(req, res) {
+  try {
+    const { date } = req.query;
+    const q = query(collection(db, "appointments"), where("date", "==", date));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const appointments = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      res.status(200).json(appointments);
+    } else {
+      res.status(404).json({ error: "No appointments found for the selected date." });
+    }
+  } catch (error) {
+    console.error("Error fetching appointments by date:", error.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
+}
+
+
 // Update an appointment
 async function updateAppointment(req, res) {
   try {
@@ -88,10 +111,9 @@ async function deleteAppointment(req, res) {
 // Get appointments by client on a specific date
 async function getClientAppointments(req, res) {
   try {
-    const { clientId, date } = req.query;
+    const { date } = req.query;
     const q = query(
       collection(db, "appointments"),
-      where("clientId", "==", clientId),
       where("date", "==", date)
     );
     const snapshot = await getDocs(q);
@@ -127,6 +149,7 @@ module.exports = {
   createAppointment,
   getAppointments,
   getAppointmentById,
+  getAppointmentsByDate,
   updateAppointment,
   deleteAppointment,
   getClientAppointments,

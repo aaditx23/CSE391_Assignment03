@@ -33,6 +33,7 @@ function AppointmentForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log(name, value)
 
     if (name === 'mechanicName') {
       const selectedMechanic = mechanics.find((mechanic) => mechanic.name === value);
@@ -50,15 +51,18 @@ function AppointmentForm() {
       console.log("FORM DATA", formData);
       console.log("MECH ID", mechId);
   
-      const mechanicResponse = await fetch(`http://localhost:5000/api/mechanics/${mechId}`);
-      const mechanic = await mechanicResponse.json();
+      // Step 1: Fetch all appointments for the given date
+      const appointmentsResponse = await fetch(`http://localhost:5000/api/appointments?date=${formData.date}`);
+      const appointments = await appointmentsResponse.json();
   
-      if (mechanicResponse.ok) {
-
-        const isMechanicAvailable = await checkMechanicAvailability(mechanic, formData.date);
-        
-        if (!isMechanicAvailable) {
-          setError('Mechanic is not available on the selected date.');
+      if (appointmentsResponse.ok) {
+        // Step 2: Check if the client already has an appointment on the same date
+        const clientHasAppointment = appointments.some(
+          (appointment) => appointment.name === formData.name && appointment.mechanicId !== mechId
+        );
+  
+        if (clientHasAppointment) {
+          setError('You already have an appointment with another mechanic on the selected date.');
           return;
         }
   
@@ -74,38 +78,45 @@ function AppointmentForm() {
         if (response.ok) {
           const appointmentId = result.id;
   
-          const updatedAppointmentIds = [...mechanic.appointmentIds, appointmentId];
-          console.log("NEW ARRAY", updatedAppointmentIds);
+          const mechanicResponse = await fetch(`http://localhost:5000/api/mechanics/${mechId}`);
+          const mechanic = await mechanicResponse.json();
   
-          const updateMechanicResponse = await fetch(`http://localhost:5000/api/mechanics/${mechId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              appointmentIds: updatedAppointmentIds
-            })
-          });
+          if (mechanicResponse.ok) {
+            const updatedAppointmentIds = [...mechanic.appointmentIds, appointmentId];
+            console.log("NEW ARRAY", updatedAppointmentIds);
   
-          const updateResult = await updateMechanicResponse.json();
-  
-          if (updateMechanicResponse.ok) {
-            alert('Appointment successfully created and mechanic updated!');
-            setFormData({
-              name: '',
-              address: '',
-              phone: '',
-              carLicense: '',
-              carEngine: '',
-              date: '',
-              mechanicName: ''
+            const updateMechanicResponse = await fetch(`http://localhost:5000/api/mechanics/${mechId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                appointmentIds: updatedAppointmentIds
+              })
             });
+  
+            const updateResult = await updateMechanicResponse.json();
+  
+            if (updateMechanicResponse.ok) {
+              alert('Appointment successfully created and mechanic updated!');
+              setFormData({
+                name: '',
+                address: '',
+                phone: '',
+                carLicense: '',
+                carEngine: '',
+                date: '',
+                mechanicName: ''
+              });
+            } else {
+              setError('Failed to update mechanic.');
+            }
           } else {
-            setError('Failed to update mechanic.');
+            setError('Mechanic not found.');
           }
         } else {
           setError(result.message);
         }
       } else {
-        setError('Mechanic not found.');
+        setError('Failed to fetch appointments.');
       }
     } catch (error) {
       setError('An error occurred while submitting the form.');

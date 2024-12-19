@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ListGroup, Alert, Spinner } from 'react-bootstrap';
+import { ListGroup, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import AppointmentDialog from '../components/appointmentDialog';
 
 function AppointmentList() {
@@ -51,6 +51,7 @@ function AppointmentList() {
     fetchAppointments(); // Initial fetch when component mounts
   }, []);
 
+
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">Appointments List</h2>
@@ -66,6 +67,23 @@ function AppointmentList() {
         <p className="text-center">No appointments available.</p>
       ) : (
         <ListGroup>
+          {/* Static header row with column names */}
+          <ListGroup.Item
+              className="d-flex justify-content-between align-items-center"
+              style={{ cursor: 'pointer' }}
+            >
+
+              <Row className="w-100 mb-2" style={{ fontWeight: 'bold' }}>
+                <Col xs={3}>Client Name</Col>
+                <Col xs={2}>Phone</Col>
+                <Col xs={3}>Car License</Col>
+                <Col xs={2}>Appointment Date</Col>
+                <Col xs={2}>Mechanic Name</Col>
+              </Row>
+
+            </ListGroup.Item>
+          
+
           {appointments.map((appointment) => (
             <ListGroup.Item
               key={appointment.appointmentId}
@@ -73,9 +91,13 @@ function AppointmentList() {
               onClick={() => handleAppointmentClick(appointment)}
               style={{ cursor: 'pointer' }}
             >
-              <span>
-                {appointment.name} - {appointment.carLicense}
-              </span>
+              <Row className="w-100">
+                <Col xs={3}>{appointment.name}</Col>
+                <Col xs={2}>{appointment.phone}</Col>
+                <Col xs={3}>{appointment.carLicense}</Col>
+                <Col xs={2}>{new Date(appointment.date).toLocaleDateString()}</Col>
+                <Col xs={2}>{appointment.mechanicName}</Col>
+              </Row>
             </ListGroup.Item>
           ))}
         </ListGroup>

@@ -59,8 +59,8 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
 
       const result = await response.json();
       if (response.ok) {
-        onSave(result); // Pass updated appointment back to parent component to trigger fetch
-        onClose(); // Close the dialog after saving
+        onSave(result);
+        onClose();
       } else {
         setError(result.message || 'Failed to update the appointment.');
       }

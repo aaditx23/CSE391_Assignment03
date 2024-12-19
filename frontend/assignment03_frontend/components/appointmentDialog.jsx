@@ -11,9 +11,11 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
   });
 
   const [mechanicsList, setMechanicsList] = useState([]);
-  const [error, setError] = useState('');
-  const [mechanic, setMechanic] = useState(appointment.mechanicName);
-  const [date, setDate] = useState(new Date(appointment.date).toISOString().split('T')[0]);
+const [error, setError] = useState('');
+const [mechanic, setMechanic] = useState(appointment.mechanicName);
+const [date, setDate] = useState(new Date(appointment.date).toISOString().split('T')[0]);
+const [prevMechanicId, setPrevMechanicId] = useState();
+const [newMechanicId, setNewMechanicId] = useState();
 
   useEffect(() => {
     const fetchMechanics = async () => {
@@ -22,52 +24,98 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
         if (!response.ok) throw new Error('Failed to fetch mechanics');
         const data = await response.json();
         setMechanicsList(data);
+  
+        const matchedMechanic = data.find(mechanic => mechanic.name === appointment.mechanicName);
+        if (matchedMechanic) {
+          setPrevMechanicId(matchedMechanic.mechanicId);
+        }
+  
       } catch (error) {
         console.error('Error fetching mechanics:', error.message);
       }
     };
-
+  
     fetchMechanics();
-  }, []);
+  }, [appointment]);
+  useEffect(() => {
+    const matchedMechanic = mechanicsList.find(mechanicObj => mechanicObj.name === mechanic);
+    if (matchedMechanic) {
+      setNewMechanicId(matchedMechanic.mechanicId);
+    }
+  }, [mechanic, mechanicsList]);
+  
 
   const handleSave = async (e) => {
     e.preventDefault();
     setError('');
-
-    // Validate if the selected mechanic has a free slot on the selected date
-    const selectedMechanic = mechanicsList.find((mech) => mech.mechanicId === formData.mechanicName);
+  
+    const selectedMechanic = mechanicsList.find((mech) => mech.mechanicId === newMechanicId);
     if (selectedMechanic) {
       const freeSlots = 4 - selectedMechanic.appointmentIds.filter(
-        (appt) => appt.date === formData.date
+        (appt) => appt.date === date
       ).length;
-
+  
       if (freeSlots <= 0) {
         setError('The selected mechanic is fully booked on the chosen date.');
         return;
       }
     }
-
+  
     try {
+      if (prevMechanicId) {
+        const prevMechanic = mechanicsList.find(mechanic => mechanic.mechanicId === prevMechanicId);
+        if (prevMechanic) {
+          const updatedPrevMechanic = {
+            ...prevMechanic,
+            appointmentIds: prevMechanic.appointmentIds.filter(id => id !== appointment.id),
+          };
+  
+          await fetch(`http://localhost:5000/api/mechanics/${prevMechanicId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedPrevMechanic),
+          });
+        }
+      }
+  
+      if (newMechanicId) {
+        const newMechanic = mechanicsList.find(mechanic => mechanic.mechanicId === newMechanicId);
+        if (newMechanic) {
+          const updatedNewMechanic = {
+            ...newMechanic,
+            appointmentIds: [...newMechanic.appointmentIds, appointment.id],
+          };
+  
+          await fetch(`http://localhost:5000/api/mechanics/${newMechanicId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedNewMechanic),
+          });
+        }
+      }
+  
       const response = await fetch(`http://localhost:5000/api/appointments/${appointment.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date: date,
-          mechanicName: mechanic
+          mechanicName: mechanic,
         }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         onSave(result);
-        onClose();
+        onClose(); 
       } else {
         setError(result.message || 'Failed to update the appointment.');
       }
+  
     } catch (error) {
       setError('An error occurred while saving the appointment.');
     }
   };
+  
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -122,7 +170,9 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
             <Form.Select
               name="mechanicId"
               value={mechanic}
-              onChange={(e) => setMechanic(e.target.value)} 
+              onChange={(e) => 
+                setMechanic(e.target.value)
+              } 
               required
             >
               <option value="">Select a Mechanic</option>

@@ -28,17 +28,15 @@ async function getMechanics(req, res) {
 
 // Get mechanic by ID
 async function getMechanicById(req, res) {
-  const { id } = req.params; // Get the id from the request parameters
+  const { id } = req.params;
 
   try {
-    const mechanicRef = doc(db, "mechanics", id); // Reference to the mechanic document
+    const mechanicRef = doc(db, "mechanics", id); 
     const mechanicSnapshot = await getDoc(mechanicRef);
 
     if (mechanicSnapshot.exists()) {
-      // If the mechanic document exists, return the mechanic data
       res.status(200).json({ id: mechanicSnapshot.id, ...mechanicSnapshot.data() });
     } else {
-      // If the mechanic is not found
       res.status(404).json({ error: "Mechanic not found" });
     }
   } catch (error) {
@@ -48,7 +46,6 @@ async function getMechanicById(req, res) {
 }
 
 
-// Update a mechanic by ID
 async function updateMechanic(req, res) {
   const { id } = req.params;
   const mechanicData = req.body;
@@ -62,7 +59,6 @@ async function updateMechanic(req, res) {
   }
 }
 
-// Delete a mechanic by ID
 async function deleteMechanic(req, res) {
   const { id } = req.params;
   try {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ListGroup, Badge } from 'react-bootstrap';
 
-function MechanicsList() {
+function MechanicsList({ updateMechanics }) {
   const [mechanics, setMechanics] = useState([]);
 
   useEffect(() => {
@@ -10,6 +10,7 @@ function MechanicsList() {
         const response = await fetch('http://localhost:5000/api/mechanics');
         const data = await response.json();
         setMechanics(data);
+        updateMechanics(data)
       } catch (error) {
         console.error('Error fetching mechanics:', error);
       }

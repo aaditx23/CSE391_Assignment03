@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Alert, Col } from 'react-bootstrap';
 
-function AppointmentForm() {
+function AppointmentForm({mechanicsList}) {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -13,23 +13,25 @@ function AppointmentForm() {
   });
 
   const [mechId, setMechId] = useState('')
-  const [mechanics, setMechanics] = useState([]);
+  const mechanics = mechanicsList
   const [error, setError] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    const fetchMechanics = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/mechanics');
-        const data = await response.json();
-        setMechanics(data);
-      } catch (error) {
-        console.error('Error fetching mechanics:', error);
-      }
-    };
+  // useEffect(() => {
+  //   // const fetchMechanics = async () => {
+  //   //   try {
+  //   //     const response = await fetch('http://localhost:5000/api/mechanics');
+  //   //     const data = await response.json();
+  //   //     setMechanics(data);
+  //   //   } catch (error) {
+  //   //     console.error('Error fetching mechanics:', error);
+  //   //   }
+  //   // };
 
-    fetchMechanics();
-  }, []);
+  //   // fetchMechanics();
+  //   setMechanics(mechanicsList)
+  //   console.log(mechanics)
+  // }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,7 +58,6 @@ function AppointmentForm() {
       const appointments = await appointmentsResponse.json();
   
       if (appointmentsResponse.ok) {
-        // Step 2: Check if the client already has an appointment on the same date
         const clientHasAppointment = appointments.some(
           (appointment) => appointment.name === formData.name && appointment.mechanicId !== mechId
         );
@@ -66,7 +67,6 @@ function AppointmentForm() {
           return;
         }
   
-        // Step 3: Submit the appointment
         const response = await fetch('http://localhost:5000/api/appointments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -124,20 +124,20 @@ function AppointmentForm() {
   };
   
 
-  const checkMechanicAvailability = async (mechanic, selectedDate) => {
-    if (mechanic.appointmentIds && mechanic.appointmentIds.length > 0) {
-      for (const appointmentId of mechanic.appointmentIds) {
-        const appointmentResponse = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`);
-        const appointment = await appointmentResponse.json();
-        const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
+  // const checkMechanicAvailability = async (mechanic, selectedDate) => {
+  //   if (mechanic.appointmentIds && mechanic.appointmentIds.length > 0) {
+  //     for (const appointmentId of mechanic.appointmentIds) {
+  //       const appointmentResponse = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`);
+  //       const appointment = await appointmentResponse.json();
+  //       const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
   
-        if (appointmentDate === selectedDate) {
-          return false;
-        }
-      }
-    }
-    return true;
-  };
+  //       if (appointmentDate === selectedDate) {
+  //         return false;
+  //       }
+  //     }
+  //   }
+  //   return true;
+  // };
   
   
 
@@ -248,7 +248,11 @@ function AppointmentForm() {
               <option value="">Select a Mechanic</option>
               {mechanics.map((mechanic) => {
                 return (
-                  <option key={mechanic.mechanicName} value={mechanic.mechanicName}>
+                  <option 
+                  key={mechanic.mechanicName} 
+                  value={mechanic.mechanicName}
+                  disabled={mechanic.appointmentIds.length >= 4}
+                  >
                     {mechanic.name}
                   </option>
                 );

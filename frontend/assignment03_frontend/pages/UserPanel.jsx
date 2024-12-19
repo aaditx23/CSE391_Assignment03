@@ -1,10 +1,16 @@
-import React from 'react';
+import {React, useState, useEffect} from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import MechanicsList from '../components/mechanicList';
 import AppointmentForm from '../components/appointmentForm';
 import HelpInfo from '../components/helpInfo'; // If you want to include the help info
 
 function UserPanel() {
+  const [mechanics, setMechanics] = useState([]); // Declare mechanics state
+
+  // Function to update mechanics list
+  const updateMechanics = (newMechanics) => {
+    setMechanics(newMechanics);
+  };
   return (
     <Container fluid style={{ minHeight: '100vh',width:'100vw',display: 'flex', justifyContent: 'center',overflowY: 'auto', marginTop: '70px' }}>
       <Col  style={{justifyContent: 'center',}} >
@@ -13,11 +19,10 @@ function UserPanel() {
         </div>
         
         <Row className="justify-content-center">
-          {/* Mechanics List */}
           <Col md={3} className="mb-4">
             <Card>
               <Card.Body>
-                <MechanicsList />
+                <MechanicsList updateMechanics={updateMechanics} />
               </Card.Body>
             </Card>
           </Col>
@@ -25,7 +30,7 @@ function UserPanel() {
           <Col md={5} className="mb-4">
             <Card>
               <Card.Body>
-                <AppointmentForm />
+                <AppointmentForm mechanicsList={mechanics }/>
               </Card.Body>
             </Card>
           </Col>

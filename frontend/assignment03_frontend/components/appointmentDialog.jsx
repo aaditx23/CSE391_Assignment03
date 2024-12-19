@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, Alert } from 'react-bootstrap';
+import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
 
 function AppointmentDialog({ appointment, onClose, onSave, mechanicsList }) {
   const [formData, setFormData] = useState({
@@ -10,90 +10,110 @@ function AppointmentDialog({ appointment, onClose, onSave, mechanicsList }) {
     mechanicName: appointment.mechanicName || '',
   });
 
+
 const [error, setError] = useState('');
 const [mechanic, setMechanic] = useState(appointment.mechanicName);
 const [date, setDate] = useState(new Date(appointment.date).toISOString().split('T')[0]);
 const [prevMechanicId, setPrevMechanicId] = useState();
 const [newMechanicId, setNewMechanicId] = useState();
+const [isLoading, setIsLoading] = useState(true);
+const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    const fetchMechanics = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/mechanics');
-        if (!response.ok) throw new Error('Failed to fetch mechanics');
-        const data = await response.json();
-        setMechanicsList(data);
-  
-        const matchedMechanic = data.find(mechanic => mechanic.name === appointment.mechanicName);
-        if (matchedMechanic) {
-          setPrevMechanicId(matchedMechanic.mechanicId);
-        }
-  
-      } catch (error) {
-        console.error('Error fetching mechanics:', error.message);
+useEffect(() => {
+  const fetchMechanics = async () => {
+    try {
+      const response = await fetch(`https://cse391a03backend.vercel.app/api/mechanics`);
+      if (!response.ok) throw new Error('Failed to fetch mechanics');
+      const data = await response.json();
+
+      const matchedMechanic = data.find(mechanic => mechanic.name === appointment.mechanicName);
+      if (matchedMechanic) {
+        setPrevMechanicId(matchedMechanic.mechanicId);
       }
-    };
-  
-    fetchMechanics();
-  }, [appointment]);
-  useEffect(() => {
-    const matchedMechanic = mechanicsList.find(mechanicObj => mechanicObj.name === mechanic);
-    if (matchedMechanic) {
-      setNewMechanicId(matchedMechanic.mechanicId);
+      else{
+        console.log("NOT FOUND")
+      }
+    } catch (error) {
+      console.error('Error fetching mechanics:', error.message);
+    } finally {
+      
     }
-  }, [mechanic, mechanicsList]);
+  };
+
+  fetchMechanics();
+}, []);
+
+useEffect(() => {
+  
+      console.log(prevMechanicId)
+      if(prevMechanicId && !isSaving){
+        setIsLoading(false);
+      }
+  const matchedMechanic = mechanicsList.find(mechanicObj => mechanicObj.name === mechanic);
+  if (matchedMechanic) {
+    setNewMechanicId(matchedMechanic.mechanicId);
+  }
+}, [mechanic, mechanicsList]);
   
 
   const handleSave = async (e) => {
+    
     e.preventDefault();
     setError('');
-  
-    const selectedMechanic = mechanicsList.find((mech) => mech.mechanicId === newMechanicId);
-    if (selectedMechanic) {
-      const freeSlots = 4 - selectedMechanic.appointmentIds.filter(
-        (appt) => appt.date === date
-      ).length;
-  
-      if (freeSlots <= 0) {
-        setError('The selected mechanic is fully booked on the chosen date.');
-        return;
+    setIsSaving(true)
+    setIsLoading(true)
+    if(prevMechanicId !== newMechanicId ){
+      const selectedMechanic = mechanicsList.find((mech) => mech.mechanicId === newMechanicId);
+      if (selectedMechanic) {
+        const freeSlots = 4 - selectedMechanic.appointmentIds.filter(
+          (appt) => appt.date === date
+        ).length;
+    
+        if (freeSlots <= 0) {
+          setError('The selected mechanic is fully booked on the chosen date.');
+          return;
+        }
       }
     }
+    
   
     try {
-      if (prevMechanicId) {
-        const prevMechanic = mechanicsList.find(mechanic => mechanic.mechanicId === prevMechanicId);
-        if (prevMechanic) {
-          const updatedPrevMechanic = {
-            ...prevMechanic,
-            appointmentIds: prevMechanic.appointmentIds.filter(id => id !== appointment.id),
-          };
-  
-          await fetch(`http://localhost:5000/api/mechanics/${prevMechanicId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedPrevMechanic),
-          });
+      
+      if(prevMechanicId !== newMechanicId && prevMechanicId && newMechanicId){
+        if (prevMechanicId) {
+          const prevMechanic = mechanicsList.find(mechanic => mechanic.mechanicId === prevMechanicId);
+          if (prevMechanic) {
+            const updatedPrevMechanic = {
+              ...prevMechanic,
+              appointmentIds: prevMechanic.appointmentIds.filter(id => id !== appointment.id),
+            };
+    
+            await fetch(`https://cse391a03backend.vercel.app/api/mechanics/${prevMechanicId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedPrevMechanic),
+            });
+          }
+        }
+    
+        if (newMechanicId) {
+          const newMechanic = mechanicsList.find(mechanic => mechanic.mechanicId === newMechanicId);
+          if (newMechanic) {
+            const updatedNewMechanic = {
+              ...newMechanic,
+              appointmentIds: [...newMechanic.appointmentIds, appointment.id],
+            };
+    
+            await fetch(`https://cse391a03backend.vercel.app/api/mechanics/${newMechanicId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedNewMechanic),
+            });
+          }
         }
       }
   
-      if (newMechanicId) {
-        const newMechanic = mechanicsList.find(mechanic => mechanic.mechanicId === newMechanicId);
-        if (newMechanic) {
-          const updatedNewMechanic = {
-            ...newMechanic,
-            appointmentIds: [...newMechanic.appointmentIds, appointment.id],
-          };
-  
-          await fetch(`http://localhost:5000/api/mechanics/${newMechanicId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedNewMechanic),
-          });
-        }
-      }
-  
-      const response = await fetch(`http://localhost:5000/api/appointments/${appointment.id}`, {
+      const response = await fetch(`https://cse391a03backend.vercel.app/api/appointments/${appointment.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,14 +129,44 @@ const [newMechanicId, setNewMechanicId] = useState();
       } else {
         setError(result.message || 'Failed to update the appointment.');
       }
+
   
     } catch (error) {
       setError('An error occurred while saving the appointment.');
     }
+    
   };
   
 
   const today = new Date().toISOString().split('T')[0];
+
+  if (isLoading) {
+    if(isSaving){
+      return (
+        <Modal show onHide={onClose} centered>
+          <Modal.Body className="text-center">
+            <Spinner animation="border" role="status" variant="primary">
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
+            <p>Updating Appointment Details</p>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    else{
+      return (
+        <Modal show onHide={onClose} centered>
+          <Modal.Body className="text-center">
+            <Spinner animation="border" role="status" variant="primary">
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
+            <p>Loading appointment details...</p>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    
+  }
 
   return (
     <Modal show onHide={onClose} centered>

@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
-import { ListGroup, Badge } from 'react-bootstrap';
+import { ListGroup, Badge, Spinner } from 'react-bootstrap';
 
 function MechanicsList({ updateMechanics }) {
   const [mechanics, setMechanics] = useState([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Track the first load
 
   useEffect(() => {
     const fetchMechanics = async () => {
+      if (isInitialLoad) setIsInitialLoad(true); // Set to true only for the first load
       try {
-        const response = await fetch('http://localhost:5000/api/mechanics');
+        const response = await fetch('https://cse391a03backend.vercel.app/api/mechanics');
         const data = await response.json();
         setMechanics(data);
-        updateMechanics(data)
+        updateMechanics(data);
       } catch (error) {
         console.error('Error fetching mechanics:', error);
+      } finally {
+        if (isInitialLoad) setIsInitialLoad(false); // Turn off initial loading after the first fetch
       }
     };
 
@@ -20,7 +24,18 @@ function MechanicsList({ updateMechanics }) {
     const intervalId = setInterval(fetchMechanics, 1000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [isInitialLoad, updateMechanics]);
+
+  if (isInitialLoad) {
+    return (
+      <div className="text-center mt-5">
+        <Spinner animation="border" role="status" variant="primary">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+        <p>Loading mechanics...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -28,7 +43,7 @@ function MechanicsList({ updateMechanics }) {
       {mechanics.length > 0 ? (
         <ListGroup>
           {mechanics.map((mechanic) => {
-            const freeSlots = 4 - mechanic.appointmentIds.length; 
+            const freeSlots = 4 - mechanic.appointmentIds.length;
             return (
               <ListGroup.Item
                 key={mechanic.mechanicId}

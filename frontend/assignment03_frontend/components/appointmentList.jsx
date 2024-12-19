@@ -12,7 +12,7 @@ function AppointmentList({mechanicsList}) {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/appointments');
+      const response = await fetch('https://cse391a03backend.vercel.app/api/appointments');
       if (!response.ok) {
         throw new Error('Failed to fetch appointments');
       }

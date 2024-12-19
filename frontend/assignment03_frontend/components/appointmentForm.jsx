@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, Button, Alert, Col } from 'react-bootstrap';
+import { Modal, Button, Form, Alert, Spinner, Col } from 'react-bootstrap';
 
 function AppointmentForm({mechanicsList}) {
   const [formData, setFormData] = useState({
@@ -15,12 +15,13 @@ function AppointmentForm({mechanicsList}) {
   const [mechId, setMechId] = useState('')
   const mechanics = mechanicsList
   const [error, setError] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
 
   // useEffect(() => {
   //   // const fetchMechanics = async () => {
   //   //   try {
-  //   //     const response = await fetch('http://localhost:5000/api/mechanics');
+  //   //     const response = await fetch('https://cse391a03backend.vercel.app/api/mechanics');
   //   //     const data = await response.json();
   //   //     setMechanics(data);
   //   //   } catch (error) {
@@ -34,6 +35,7 @@ function AppointmentForm({mechanicsList}) {
   // }, []);
 
   const handleChange = (e) => {
+    
     const { name, value } = e.target;
     console.log(name, value)
 
@@ -46,6 +48,7 @@ function AppointmentForm({mechanicsList}) {
   };
 
   const handleSubmit = async (e) => {
+    setIsLoading(true)
     e.preventDefault();
     setError('');
   
@@ -54,7 +57,7 @@ function AppointmentForm({mechanicsList}) {
       console.log("MECH ID", mechId);
   
       // Step 1: Fetch all appointments for the given date
-      const appointmentsResponse = await fetch(`http://localhost:5000/api/appointments?date=${formData.date}`);
+      const appointmentsResponse = await fetch(`https://cse391a03backend.vercel.app/api/appointments?date=${formData.date}`);
       const appointments = await appointmentsResponse.json();
   
       if (appointmentsResponse.ok) {
@@ -67,7 +70,7 @@ function AppointmentForm({mechanicsList}) {
           return;
         }
   
-        const response = await fetch('http://localhost:5000/api/appointments', {
+        const response = await fetch('https://cse391a03backend.vercel.app/api/appointments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -78,14 +81,14 @@ function AppointmentForm({mechanicsList}) {
         if (response.ok) {
           const appointmentId = result.id;
   
-          const mechanicResponse = await fetch(`http://localhost:5000/api/mechanics/${mechId}`);
+          const mechanicResponse = await fetch(`https://cse391a03backend.vercel.app/api/mechanics/${mechId}`);
           const mechanic = await mechanicResponse.json();
   
           if (mechanicResponse.ok) {
             const updatedAppointmentIds = [...mechanic.appointmentIds, appointmentId];
             console.log("NEW ARRAY", updatedAppointmentIds);
   
-            const updateMechanicResponse = await fetch(`http://localhost:5000/api/mechanics/${mechId}`, {
+            const updateMechanicResponse = await fetch(`https://cse391a03backend.vercel.app/api/mechanics/${mechId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -121,13 +124,14 @@ function AppointmentForm({mechanicsList}) {
     } catch (error) {
       setError('An error occurred while submitting the form.');
     }
+    setIsLoading(false)
   };
   
 
   // const checkMechanicAvailability = async (mechanic, selectedDate) => {
   //   if (mechanic.appointmentIds && mechanic.appointmentIds.length > 0) {
   //     for (const appointmentId of mechanic.appointmentIds) {
-  //       const appointmentResponse = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`);
+  //       const appointmentResponse = await fetch(`https://cse391a03backend.vercel.app/api/appointments/${appointmentId}`);
   //       const appointment = await appointmentResponse.json();
   //       const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
   
@@ -142,6 +146,19 @@ function AppointmentForm({mechanicsList}) {
   
 
   const today = new Date().toISOString().split('T')[0];
+
+  if(isLoading){
+    return (
+      <Modal show centered>
+        <Modal.Body className="text-center">
+          <Spinner animation="border" role="status" variant="primary">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p>Updating Appointment Details</p>
+        </Modal.Body>
+      </Modal>
+    );
+  }
 
   return (
     <div className="container mt-4">
@@ -186,7 +203,7 @@ function AppointmentForm({mechanicsList}) {
               value={formData.phone}
               onChange={handleChange}
               required
-              pattern="[0-9]{10}"
+              pattern="[0-9]{11}"
             />
           </Form.Group>
         </Col>

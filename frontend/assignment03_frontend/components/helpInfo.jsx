@@ -17,7 +17,7 @@ function HelpInfo() {
             <strong>Address:</strong> Enter your complete address (e.g., 123 Main St, City, State, ZIP).
           </ListGroup.Item>
           <ListGroup.Item>
-            <strong>Phone:</strong> Enter a 10-digit phone number (e.g., 1234567890). No dashes or spaces.
+            <strong>Phone:</strong> Enter a 11-digit phone number (e.g., 12345678901). No dashes or spaces.
           </ListGroup.Item>
           <ListGroup.Item>
             <strong>Car License Number:</strong> Enter the car's license plate number (e.g., ABC1234).

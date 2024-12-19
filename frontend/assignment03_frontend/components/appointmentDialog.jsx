@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 
-function AppointmentDialog({ appointment, onClose, onSave }) {
+function AppointmentDialog({ appointment, onClose, onSave, mechanicsList }) {
   const [formData, setFormData] = useState({
     name: appointment.name || '',
     phone: appointment.phone || '',
@@ -10,7 +10,6 @@ function AppointmentDialog({ appointment, onClose, onSave }) {
     mechanicName: appointment.mechanicName || '',
   });
 
-  const [mechanicsList, setMechanicsList] = useState([]);
 const [error, setError] = useState('');
 const [mechanic, setMechanic] = useState(appointment.mechanicName);
 const [date, setDate] = useState(new Date(appointment.date).toISOString().split('T')[0]);

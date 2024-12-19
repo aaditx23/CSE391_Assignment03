@@ -5,7 +5,7 @@ import AppointmentForm from '../components/appointmentForm';
 import HelpInfo from '../components/helpInfo'; // If you want to include the help info
 
 function UserPanel() {
-  const [mechanics, setMechanics] = useState([]); // Declare mechanics state
+  const [mechanics, setMechanics] = useState([]);
 
   // Function to update mechanics list
   const updateMechanics = (newMechanics) => {
